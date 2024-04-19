@@ -1,34 +1,32 @@
 import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.util.List;
 
+// Custom exception for duplicate product IDs
+class DuplicateProductIDException extends Exception {
+    public DuplicateProductIDException(String message) {
+        super(message);
+    }
+}
+
+// Custom exception for product not found
+class ProductNotFoundException extends Exception {
+    public ProductNotFoundException(String message) {
+        super(message);
+    }
+}
+
+// Product class
 class Product {
-    private String productName;
-    private int productId;
-    private double price;
-    private int quantityInStock;
+    protected String productName;
+    protected int productId;
+    protected double price;
+    protected int quantityInStock;
 
     public Product(String productName, int productId, double price, int quantityInStock) {
         this.productName = productName;
         this.productId = productId;
         this.price = price;
         this.quantityInStock = quantityInStock;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public int getProductId() {
-        return productId;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public int getQuantityInStock() {
-        return quantityInStock;
     }
 
     public void displayDetails() {
@@ -39,6 +37,7 @@ class Product {
     }
 }
 
+// Electronics class
 class Electronics extends Product {
     private String brand;
     private int warrantyPeriod;
@@ -53,10 +52,11 @@ class Electronics extends Product {
     public void displayDetails() {
         super.displayDetails();
         System.out.println("Brand: " + brand);
-        System.out.println("Warranty Period: " + warrantyPeriod + " years");
+        System.out.println("Warranty Period: " + warrantyPeriod + " months");
     }
 }
 
+// Clothing class
 class Clothing extends Product {
     private String size;
     private String material;
@@ -75,11 +75,31 @@ class Clothing extends Product {
     }
 }
 
+// Shopping cart class
 class ShoppingCart {
-    private ArrayList<Product> cartItems = new ArrayList<>();
+    private List<Product> cartItems = new ArrayList<>();
 
-    public void addToCart(Product product) {
+    public void addProduct(Product product) throws DuplicateProductIDException {
+        for (Product p : cartItems) {
+            if (p.productId == product.productId) {
+                throw new DuplicateProductIDException("Product with ID " + product.productId + " already exists in the cart.");
+            }
+        }
         cartItems.add(product);
+    }
+
+    public void deleteProduct(int productId) throws ProductNotFoundException {
+        boolean found = false;
+        for (Product p : cartItems) {
+            if (p.productId == productId) {
+                cartItems.remove(p);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw new ProductNotFoundException("Product with ID " + productId + " not found in the cart.");
+        }
     }
 
     public void displayCart() {
@@ -87,96 +107,57 @@ class ShoppingCart {
             System.out.println("Your shopping cart is empty.");
         } else {
             System.out.println("Shopping Cart:");
-            for (Product product : cartItems) {
-                product.displayDetails();
-                System.out.println();
+            for (Product p : cartItems) {
+                p.displayDetails();
+                System.out.println("------------------------------");
             }
         }
     }
 
-    public double calculateTotalPrice() {
+    public double getTotalPrice() {
         double total = 0;
-        for (Product product : cartItems) {
-            total += product.getPrice();
+        for (Product p : cartItems) {
+            total += p.price;
         }
         return total;
     }
 }
 
-class OnlineShoppingSystem {
+public class OnlineShoppingSystem {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
         ShoppingCart cart = new ShoppingCart();
 
-        while (true) {
-            System.out.println("Choose an option:");
-            System.out.println("1. Add Electronics to Cart");
-            System.out.println("2. Add Clothing to Cart");
-            System.out.println("3. View Cart");
-            System.out.println("4. Checkout");
-            System.out.println("5. Exit");
+        try {
+            // Adding electronics to the cart
+            Electronics phone = new Electronics("Smartphone", 1, 799.99, 10, "Apple", 12);
+            cart.addProduct(phone);
 
-            try {
-                int option = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
+            // Adding clothing to the cart
+            Clothing shirt = new Clothing("T-shirt", 2, 19.99, 20, "M", "Cotton");
+            cart.addProduct(shirt);
 
-                switch (option) {
-                    case 1:
-                        System.out.println("Enter Electronics details:");
-                        System.out.print("Product Name: ");
-                        String electronicsName = scanner.nextLine();
-                        System.out.print("Product ID: ");
-                        int electronicsId = scanner.nextInt();
-                        System.out.print("Price: Rs");
-                        double electronicsPrice = scanner.nextDouble();
-                        System.out.print("Quantity in Stock: ");
-                        int electronicsQuantity = scanner.nextInt();
-                        scanner.nextLine(); // Consume newline
-                        System.out.print("Brand: ");
-                        String electronicsBrand = scanner.nextLine();
-                        System.out.print("Warranty Period (in years): ");
-                        int warrantyPeriod = scanner.nextInt();
-                        scanner.nextLine(); // Consume newline
-                        Electronics electronics = new Electronics(electronicsName, electronicsId, electronicsPrice, electronicsQuantity, electronicsBrand, warrantyPeriod);
-                        cart.addToCart(electronics);
-                        break;
-                    case 2:
-                        System.out.println("Enter Clothing details:");
-                        System.out.print("Product Name: ");
-                        String clothingName = scanner.nextLine();
-                        System.out.print("Product ID: ");
-                        int clothingId = scanner.nextInt();
-                        System.out.print("Price: $");
-                        double clothingPrice = scanner.nextDouble();
-                        System.out.print("Quantity in Stock: ");
-                        int clothingQuantity = scanner.nextInt();
-                        scanner.nextLine(); // Consume newline
-                        System.out.print("Size: ");
-                        String clothingSize = scanner.nextLine();
-                        System.out.print("Material: ");
-                        String clothingMaterial = scanner.nextLine();
-                        Clothing clothing = new Clothing(clothingName, clothingId, clothingPrice, clothingQuantity, clothingSize, clothingMaterial);
-                        cart.addToCart(clothing);
-                        break;
-                    case 3:
-                        cart.displayCart();
-                        System.out.println("Total Price: Rs" + cart.calculateTotalPrice());
-                        break;
-                    case 4:
-                        System.out.println("Thank you for shopping with us!");
-                        return;
-                    case 5:
-                        System.out.println("Exiting...");
-                        System.exit(0);
-                    default:
-                        System.out.println("Invalid option. Please choose again.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a valid option.");
-                scanner.nextLine(); // Clear the invalid input
-            }
+            // Adding duplicate product (should throw an exception)
+            Electronics duplicatePhone = new Electronics("Smartphone", 1, 799.99, 5, "Samsung", 12);
+            cart.addProduct(duplicatePhone); // This should throw DuplicateProductIDException
+        } catch (DuplicateProductIDException | ProductNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
         }
+
+        // Displaying the cart contents
+        cart.displayCart();
+
+        // Calculating and displaying the total price
+        System.out.println("Total Price: $" + cart.getTotalPrice());
+
+        // Deleting a product from the cart
+        try {
+            cart.deleteProduct(2);
+        } catch (ProductNotFoundException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        // Displaying the updated cart contents
+        cart.displayCart();
     }
 }
-
 
